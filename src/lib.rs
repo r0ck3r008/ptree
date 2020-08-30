@@ -1,4 +1,5 @@
 mod ptree;
+use ptree::*;
 
 #[cfg(test)]
 mod tests {
