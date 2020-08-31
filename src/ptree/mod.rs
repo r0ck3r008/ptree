@@ -1,22 +1,19 @@
 use std::collections::HashMap;
 
-struct Pnode<'a> {
-    slice: &'a str,
-    hmap: HashMap<char, Child<'a>>,
+struct Pnode {
+    slice: String,
+    hmap: HashMap<char, Child>,
 }
 
-type Child<'a> = Box<Pnode<'a>>;
+type Child = Box<Pnode>;
 
-struct Ptree<'a> {
-    root: Child<'a>,
+struct Ptree {
+    root: Child,
     size: usize,
 }
 
-fn countlvl(s1: &str, s2: &str) -> usize {
-    if &s1 == &"" {
-        return 0;
-    }
-    let mut count: usize = 0;
+fn getlvl(s1: &str, s2: &str) -> usize {
+    let mut count = 0;
     let v1: Vec<char> = s1.chars().collect();
     let v2: Vec<char> = s2.chars().collect();
     let mlen = if v1.len() < v2.len() {
@@ -35,58 +32,58 @@ fn countlvl(s1: &str, s2: &str) -> usize {
     return count;
 }
 
-impl<'a> Pnode<'a> {
-    fn new(snew: &'a str) -> Self {
+impl Pnode {
+    fn new(snew: &str) -> Self {
         return Self {
-            slice: snew,
+            slice: String::from(snew),
             hmap: HashMap::new(),
         };
     }
 
-    fn add_to_hmap(&mut self, snew: &'a str, lvl: usize, splitat: char) {
-        if let Some(node) = self.hmap.get_mut(&splitat) {
+    fn update_hmap(&mut self, opt_snew: Option<&str>, lvl: usize, c: char) {
+        let snew: &str = match opt_snew {
+            None => &self.slice,
+            Some(snew) => snew,
+        };
+
+        if let Some(node) = self.hmap.get_mut(&c) {
             node.add(&snew[lvl..]);
         } else {
-            self.hmap
-                .insert(splitat, Box::new(Pnode::new(&snew[lvl..])));
+            self.hmap.insert(c, Box::new(Pnode::new(&snew[lvl..])));
         }
     }
 
-    fn add(&mut self, snew: &'a str) {
-        let lvl = countlvl(self.slice, snew);
-        match snew.chars().nth(lvl) {
-            None => return,
-            Some(split) => {
-                self.add_to_hmap(snew, lvl, split);
-            }
-        };
-        match self.slice.chars().nth(lvl) {
-            None => return,
-            Some(split) => {
-                self.add_to_hmap(self.slice, lvl, split);
-                self.slice = &self.slice[0..lvl];
-            }
-        };
+    fn add(&mut self, snew: &str) {
+        let lvl: usize = getlvl(&self.slice, snew);
+        if let Some(split) = snew.chars().nth(lvl) {
+            self.update_hmap(Some(&snew), lvl, split);
+        }
+
+        if let Some(split) = self.slice.chars().nth(lvl) {
+            self.update_hmap(None, lvl, split);
+            self.slice = String::from(&self.slice[0..lvl]);
+        }
     }
 
     fn find(&self, sfind: &str) -> bool {
-        let lvl = countlvl(self.slice, sfind);
+        let lvl: usize = getlvl(&self.slice, sfind);
         match sfind.chars().nth(lvl) {
             None => {
                 return true;
             }
-            Some(c) => {
-                if let Some(node) = self.hmap.get(&c) {
-                    return node.find(&sfind[lvl..]);
-                } else {
+            Some(split) => match self.hmap.get(&split) {
+                None => {
                     return false;
                 }
-            }
-        }
+                Some(node) => {
+                    return node.find(&sfind[lvl..]);
+                }
+            },
+        };
     }
 }
 
-impl<'a> Ptree<'a> {
+impl Ptree {
     pub fn new() -> Self {
         return Self {
             root: Box::new(Pnode::new("")),
@@ -94,9 +91,8 @@ impl<'a> Ptree<'a> {
         };
     }
 
-    pub fn add(&mut self, snew: &'a str) {
+    pub fn add(&mut self, snew: &str) {
         self.root.add(snew);
-        self.size += 1;
     }
 
     pub fn find(&self, sfind: &str) -> bool {
