@@ -1,10 +1,11 @@
 mod ptree;
-use ptree::*;
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
+#[test]
+fn it_works() {
+    let mut pt = ptree::Ptree::new();
+    pt.add("naman");
+    pt.add("nanan");
+
+    assert!(pt.find("naman"));
+    assert!(!pt.find("sakshi"));
 }
