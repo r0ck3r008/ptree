@@ -7,7 +7,7 @@ struct Pnode {
 
 type Child = Box<Pnode>;
 
-struct Ptree {
+pub struct Ptree {
     root: Child,
     size: usize,
 }
